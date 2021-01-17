@@ -16,4 +16,4 @@ def generate_moves(game_state):
 
 
 l = lambda_connector.Lambda(id, token, generate_moves, visualizer=False)
-l.run(ranked=True)
+l.run(ranked=False)

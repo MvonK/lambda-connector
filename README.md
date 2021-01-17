@@ -1,4 +1,4 @@
-# Documentation
+# Lambda connector
 This is a client to the lambda server, designed with ease-of-use in mind. It offers three 
 abstract classes, Lambda, which represents a connection to the server, GameState, which 
 represents the current state of game being played and Bot, which represents one bot on the

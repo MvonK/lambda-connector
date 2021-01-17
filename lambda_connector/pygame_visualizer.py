@@ -6,11 +6,7 @@ bot2_image_file = pathlib.Path(__file__).parent.absolute() / "bot2.png"
 
 class PygameVisualization:
     def __init__(self):
-        try:
-            import pygame
-        except:
-            print("Pygame not installed. Do 'pip install pygame' to make the local visualizator work, "
-                  "or use the web one")
+        import pygame
         self.win = pygame.display.set_mode((900, 600))
         self.bot_image = pygame.image.load(str(bot_image_file))
         self.bot_image2 = pygame.image.load(str(bot2_image_file))

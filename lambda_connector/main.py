@@ -29,9 +29,16 @@ class Lambda(socketio.ClientNamespace):
         self.loggedin = False
         self.last_sent = datetime.datetime.now()
         self.move_generator = move_generator
+        self.fighting = False
+        self.visualizer = None
         if visualizer:
-            self.visualizer = PygameVisualization()
-        else:
+            try:
+                import pygame
+                self.visualizer = PygameVisualization()
+            except:
+                print("Pygame not installed. Do 'pip install pygame' to make the local visualizator work, "
+                      "or use the web one")
+        if self.visualizer is None:
             class NoVis:
                 def print_state(self, _):
                     pass
@@ -59,12 +66,14 @@ class Lambda(socketio.ClientNamespace):
             self.sio.emit("start_training", namespace="/play")
         else:
             self.sio.emit("join_game_queue", namespace="/play")
+        self.fighting = False
+        print("Connected and looking for a match...")
 
     def on_connect(self):
         print("I'm connected!")
 
-    def on_connect_error(self):
-        print("The connection failed!")
+    def on_connect_error(self, message):
+        print("The connection failed! " + message)
 
     def on_disconnect(self):
         print("I'm disconnected!")
@@ -89,9 +98,13 @@ class Lambda(socketio.ClientNamespace):
             print("You won! Congrats!")
         else:
             print("Your opponent was victorious.")
+        self.fighting = False
         self.sio.disconnect()
 
     def on_game_state_update(self, new_data):
+        if not self.fighting:
+            print("Match started!")
+            self.fighting = True
         response = []
         if new_data is not None:
             self.visualizer.print_state(new_data)
