@@ -1,1 +1,2 @@
-python-socketio~==4.6.0
+python-socketio~=4.6.0
+python-engineio==3.13.2

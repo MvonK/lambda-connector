@@ -38,7 +38,7 @@ Bot is an object representing one bot on the field. It has these main attributes
 - `speed`: Speed in pixels per second, derived from `speed_category`
 - `speed_category`: Speed category of the bot
 - `current_angle`: How the bot is rotated
-- `id`: ID of the bot (zero to five for each team)
+- `id`: ID of the bot (zero to four for each team)
 
 It also offers command functions, used to control the bots behavior.
 
@@ -48,5 +48,13 @@ It also offers command functions, used to control the bots behavior.
 Note, that rotation can be stopped, for example if two bots collide. 
 
 ### Notes
-Angle is in degrees, where 0 is headed to the west, then increasing clockwise, 
+Angle is in degrees, where 0 is headed to the east, then increasing clockwise, 
 until 360, which is equal to 0. Position x, y of (0, 0) is in the top left corner.
+The field has a width of 900 and height of 600.
+The faster you go, the slower is your rotational speed, specifically as follows:
+
+velocities = [0, 30, 60, 100, 150]
+angular_speeds = [70, 40, 20, 10, 5]
+
+This means that if the speed category is 0, the bot is not moving forward and can rotate with the
+speed of 70 degrees per second.
