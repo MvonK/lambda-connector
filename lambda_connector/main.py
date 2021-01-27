@@ -94,7 +94,7 @@ class Lambda(socketio.ClientNamespace):
     def on_game_results(self, results):
         self.visualizer.quit()
         print("End.")
-        if results["winner"] == id:
+        if results["winner"] == self.id:
             print("You won! Congrats!")
         else:
             print("Your opponent was victorious.")
@@ -120,6 +120,8 @@ class Lambda(socketio.ClientNamespace):
 
 
 class GameState:
+    frame_count = -1
+
     def __init__(self, state, local_id):
         self.time = state["time"]
         self.my_bots = [Bot(b) for b in state["bots"][local_id]]
@@ -127,6 +129,7 @@ class GameState:
         opponent_id.remove(local_id)
         opponent_id = opponent_id[0]
         self.enemy_bots = [Bot(b) for b in state["bots"][opponent_id]]
+        GameState.frame_count += 1
 
     def generate_commands(self):
         response = []
@@ -136,9 +139,17 @@ class GameState:
 
 
 class Bot:
+    velocities = [0, 30, 60, 100, 150]
+    angular_speeds = [70, 40, 20, 10, 5]
+    radius = 20
+
     def __init__(self, state):
         self.x = None
         self.y = None
+        self.current_angle = None
+        self.speed_category = None
+        self.speed = None
+        self.id = None
         for atr in state:
             self.__dict__[atr] = state[atr]
 
