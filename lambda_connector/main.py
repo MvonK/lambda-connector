@@ -8,7 +8,7 @@ from .pygame_visualizer import PygameVisualization
 
 class Lambda(socketio.ClientNamespace):
     def __init__(self, id, token, move_generator, visualizer=True, address='https://lambda.kalab.sk:5000/play',
-                 ratelimit=0.23):
+                 ratelimit=0.23, debuglog=False):
         """
         Creates a connection to a lambda server.
         :param id: Your user ID
@@ -22,11 +22,13 @@ class Lambda(socketio.ClientNamespace):
         self.id = id           # put your ID and token in these two variables
         self.token = token
         self.address = address
+        self.response = {}
 
         self.rate_limiting_intervals = ratelimit
         self.sio = socketio.Client()
 
         self.loggedin = False
+        self.debuglog = debuglog
         self.last_sent = datetime.datetime.now()
         self.move_generator = move_generator
         self.fighting = False
@@ -89,6 +91,7 @@ class Lambda(socketio.ClientNamespace):
         print("Login worked! " + message["message"])
 
     def on_rate_limit(self, message):
+        print("Rate limited, repeating")
         self.on_game_state_update(None)
 
     def on_game_results(self, results):
@@ -102,21 +105,26 @@ class Lambda(socketio.ClientNamespace):
         self.sio.disconnect()
 
     def on_game_state_update(self, new_data):
+        if self.debuglog:
+            print("New data: " + str(new_data))
         if not self.fighting:
             print("Match started!")
             self.fighting = True
-        response = []
         if new_data is not None:
             self.visualizer.print_state(new_data)
             state = GameState(new_data, self.id)
+            if self.debuglog:
+                print("Generating commands with user-defined function")
             self.move_generator(state)
-            response = state.generate_commands()
+            self.response = state.generate_commands()
 
         to_sleep = (self.last_sent + datetime.timedelta(0, self.rate_limiting_intervals) - datetime.datetime.now()).total_seconds()
         if to_sleep > 0:
             time.sleep(to_sleep)
         self.last_sent = datetime.datetime.now()
-        self.sio.emit("commands_update", response, namespace="/play")
+        if self.debuglog:
+            print("Sending response: {0}".format(self.response))
+        self.sio.emit("commands_update", self.response, namespace="/play")
 
 
 class GameState:
@@ -138,7 +146,25 @@ class GameState:
         return response
 
 
-class Bot:
+class Point:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def find_direction_towards(self, point):
+        return self.direction_towards(point)
+
+    def direction_towards(self, point):
+        relative_angle = math.degrees(math.atan2(point.y - self.y, point.x - self.x))
+        if relative_angle < 0:
+            relative_angle = 360 - abs(relative_angle)
+        return relative_angle
+
+    def distance_from(self, other):
+        return math.sqrt(abs(self.x - other.x)**2 + abs(self.y - other.y)**2)
+
+
+class Bot(Point):
     velocities = [0, 30, 60, 100, 150]
     angular_speeds = [70, 40, 20, 10, 5]
     radius = 20
@@ -155,12 +181,7 @@ class Bot:
 
         self.new_target_angle = None
         self.speed_change = None
-
-    def find_direction_towards(self, bot):
-        relative_angle = math.degrees(math.atan2(bot.y - self.y, bot.x - self.x))
-        if relative_angle < 0:
-            relative_angle = 360 - abs(relative_angle)
-        return relative_angle
+        super().__init__(self.x, self.y)
 
     def accelerate(self):
         self.speed_change = "accelerate"
